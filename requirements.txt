@@ -1,0 +1,11 @@
+img2pdf
+Pillow
+PyMuPDF
+pypdf
+pyTelegramBotAPI
+python-docx
+python-dotenv
+reportlab
+requests
+arabic-reshaper
+python-bidi
