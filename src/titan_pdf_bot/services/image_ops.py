@@ -105,11 +105,21 @@ def process_pdf_to_images(path, uid, prog, msg):
         else:
             for i in range(0, len(images), 10):
                 media_group = []
-                for img_path in images[i:i + 10]:
-                    with open(img_path, 'rb') as img_file:
-                        media_group.append(types.InputMediaPhoto(img_file.read()))
-                if media_group:
-                    bot.send_media_group(msg.chat.id, media_group)
+                opened_files = []
+                try:
+                    for img_path in images[i:i + 10]:
+                        f = open(img_path, 'rb')
+                        opened_files.append(f)
+                        media_group.append(types.InputMediaPhoto(f))
+                    
+                    if media_group:
+                        bot.send_media_group(msg.chat.id, media_group)
+                finally:
+                    for f in opened_files:
+                        try:
+                            f.close()
+                        except Exception:
+                            pass
 
             if images:
                 bot.send_message(

@@ -2,17 +2,35 @@ import time
 import shutil
 import os
 import threading
+import json
 from collections import defaultdict
 from titan_pdf_bot.core.config import AdvancedConfig
 from titan_pdf_bot.core.logger import logger
+from titan_pdf_bot.core.database import db
 
 
 class SessionManager:
     def __init__(self):
-        self.sessions = defaultdict(dict)
+        self.sessions = {}
         self.user_activity = {}
         self.rate_limits = defaultdict(list)
         self.lock = threading.RLock()
+        self._load_from_db()
+
+    def _load_from_db(self):
+        """تحميل الجلسات المحفوظة من قاعدة البيانات عند بدء التشغيل"""
+        try:
+            stored_sessions = db.load_all_sessions()
+            with self.lock:
+                for user_id, data, last_activity in stored_sessions:
+                    try:
+                        self.sessions[user_id] = json.loads(data)
+                        self.user_activity[user_id] = last_activity
+                    except Exception:
+                        continue
+            logger.log('info', f"✅ تم استعادة {len(self.sessions)} جلسة من قاعدة البيانات")
+        except Exception as e:
+            logger.log('error', f"❌ فشل تحميل الجلسات من قاعدة البيانات: {e}")
 
     def create_session(self, user_id, mode, **kwargs):
         with self.lock:
@@ -26,6 +44,7 @@ class SessionManager:
                 **kwargs
             }
             self.user_activity[user_id] = time.time()
+            db.save_session(user_id, self.sessions[user_id], self.user_activity[user_id])
 
     def get_session(self, user_id):
         with self.lock:
@@ -37,6 +56,7 @@ class SessionManager:
                 self.sessions[user_id].update(kwargs)
                 self.sessions[user_id]['last_activity'] = time.time()
                 self.user_activity[user_id] = time.time()
+                db.save_session(user_id, self.sessions[user_id], self.user_activity[user_id])
 
     def clear_session(self, user_id):
         with self.lock:
@@ -46,8 +66,9 @@ class SessionManager:
                     if os.path.exists(user_dir):
                         shutil.rmtree(user_dir, ignore_errors=True)
                 except Exception as e:
-                    logger.log('error', f"??? ?? ????? ???? ????????: {e}", user_id)
+                    logger.log('error', f"خطأ في حذف ملفات المستخدم: {e}", user_id)
                 self.sessions.pop(user_id, None)
+                db.delete_session(user_id)
             self.user_activity.pop(user_id, None)
 
     def check_rate_limit(self, user_id):
@@ -77,8 +98,6 @@ class SessionManager:
 
         for uid in inactive:
             self.clear_session(uid)
-            with self.lock:
-                self.user_activity.pop(uid, None)
 
         return len(inactive)
 

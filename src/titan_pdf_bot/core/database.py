@@ -1,6 +1,7 @@
 import sqlite3
 import threading
 import os
+import json
 from datetime import datetime
 from titan_pdf_bot.core.config import AdvancedConfig
 
@@ -44,6 +45,11 @@ class AdvancedDatabase:
                 total_size INTEGER DEFAULT 0,
                 active_users INTEGER DEFAULT 0
             )''')
+            conn.execute('''CREATE TABLE IF NOT EXISTS sessions (
+                user_id TEXT PRIMARY KEY,
+                data TEXT,
+                last_activity REAL
+            )''')
             conn.commit()
 
     def execute(self, query, params=(), commit=False):
@@ -57,7 +63,7 @@ class AdvancedDatabase:
     def register_user(self, user):
         user_id = str(user.id)
         first_name = user.first_name or ""
-        username = f"@{user.username}" if user.username else "??? ????"
+        username = f"@{user.username}" if user.username else "غير معروف"
         join_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.execute(
             '''INSERT OR IGNORE INTO users (user_id, first_name, username, join_date, last_active)
@@ -67,7 +73,7 @@ class AdvancedDatabase:
         )
 
     def log_operation(self, user_id, operation_type, file_name="", file_size=0,
-                      processing_time=0, status="????", details=""):
+                      processing_time=0, status="ناجح", details=""):
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.execute(
             '''INSERT INTO operations
@@ -137,6 +143,19 @@ class AdvancedDatabase:
 
     def delete_user(self, user_id):
         self.execute("DELETE FROM users WHERE user_id = ?", (str(user_id),), commit=True)
+
+    def save_session(self, user_id, data, last_activity):
+        self.execute(
+            "INSERT OR REPLACE INTO sessions (user_id, data, last_activity) VALUES (?, ?, ?)",
+            (str(user_id), json.dumps(data), last_activity),
+            commit=True
+        )
+
+    def load_all_sessions(self):
+        return self.execute("SELECT user_id, data, last_activity FROM sessions")
+
+    def delete_session(self, user_id):
+        self.execute("DELETE FROM sessions WHERE user_id = ?", (str(user_id),), commit=True)
 
 
 db = AdvancedDatabase()

@@ -17,6 +17,27 @@ except ImportError:
     ARABIC_LIB_INSTALLED = False
     print("⚠️ تحذير: مكتبات اللغة العربية غير مثبتة.")
 
+def _register_arabic_font():
+    """تسجيل الخط العربي إذا كان متوفراً"""
+    font_name = "Helvetica"
+    try:
+        font_path = os.path.join(AdvancedConfig.BASE_DIR, "assets", "fonts", "arialbd.ttf")
+        if os.path.exists(font_path):
+            pdfmetrics.registerFont(TTFont('Arabic', font_path))
+            font_name = 'Arabic'
+    except Exception:
+        pass
+    return font_name
+
+def _reshape_text(text, font_name):
+    """تهيئة النص العربي للعرض الصحيح"""
+    if ARABIC_LIB_INSTALLED and font_name == 'Arabic':
+        try:
+            return get_display(arabic_reshaper.reshape(text))
+        except Exception:
+            pass
+    return text
+
 def process_text_to_pdf(text, file_name, user_id):
     output = FileProcessor.build_output_path(user_id, file_name)
     
@@ -27,20 +48,7 @@ def process_text_to_pdf(text, file_name, user_id):
     y_position = height - margin
     
     # إعداد الخط
-    font_name = "Helvetica"
-    try:
-        # Check specific path in assets/fonts for Bold font
-        font_path = os.path.join(AdvancedConfig.BASE_DIR, "assets", "fonts", "arialbd.ttf")
-        
-        if os.path.exists(font_path):
-            pdfmetrics.registerFont(TTFont('Arabic', font_path))
-            font_name = 'Arabic'
-        else:
-            print(f"⚠️ تحذير: ملف الخط غير موجود في المسار: {font_path}")
-    except Exception as e: 
-        print(f"⚠️ خطأ في تحميل الخط: {e}")
-        pass
-    
+    font_name = _register_arabic_font()
     c.setFont(font_name, 12)
     
     # تقسيم النص إلى أسطر
@@ -53,11 +61,7 @@ def process_text_to_pdf(text, file_name, user_id):
             continue
             
         # معالجة النص العربي
-        if ARABIC_LIB_INSTALLED and font_name == 'Arabic':
-            try:
-                paragraph = get_display(arabic_reshaper.reshape(paragraph))
-            except:
-                pass
+        paragraph = _reshape_text(paragraph, font_name)
         
         # تقسيم الفقرة إلى أسطول تناسب الصفحة
         words = paragraph.split()
@@ -162,18 +166,21 @@ def process_watermark(path, text, uid):
         reader = PdfReader(path)
         writer = PdfWriter()
 
+        font_name = _register_arabic_font()
+        reshaped_text = _reshape_text(text, font_name)
+
         for page in reader.pages:
             packet = io.BytesIO()
             c = canvas.Canvas(packet, pagesize=page.mediabox)
 
-            c.setFont("Helvetica", 40)
+            c.setFont(font_name, 40)
             c.setFillColorRGB(0.5, 0.5, 0.5, alpha=0.3)
             c.rotate(45)
 
             width = float(page.mediabox.width)
             height = float(page.mediabox.height)
 
-            c.drawString(width / 2 - 100, height / 2, text)
+            c.drawCentredString(width / 2, height / 2, reshaped_text)
 
             c.save()
 

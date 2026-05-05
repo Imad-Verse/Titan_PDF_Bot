@@ -1,3 +1,4 @@
+import requests
 from telebot import types
 from types import SimpleNamespace
 import os
@@ -478,9 +479,12 @@ def handle_file_upload(message):
             return
 
         file_info = bot.get_file(file_id)
-        file_content = bot.download_file(file_info.file_path)
-
-        file_path = FileProcessor.save_file(user_id, file_content, file_name)
+        
+        # تحميل الملف بنظام التدفق (Stream) لتقليل استهلاك الرام
+        download_url = f"https://api.telegram.org/file/bot{AdvancedConfig.API_TOKEN}/{file_info.file_path}"
+        with requests.get(download_url, stream=True, timeout=AdvancedConfig.REQUEST_TIMEOUT) as r:
+            r.raise_for_status()
+            file_path = FileProcessor.save_file_stream(user_id, r, file_name)
 
         if mode == 'text_to_pdf' and file_name.lower().endswith(('.txt', '.doc', '.docx')):
             try:
@@ -722,4 +726,3 @@ def handle_text_input(message):
             process_file(message, session)
         else:
             bot.reply_to(message, "⚠️ <b>زاوية غير صالحة!</b>\nاختر من: 90°، 180°، 270°", parse_mode='HTML')
-

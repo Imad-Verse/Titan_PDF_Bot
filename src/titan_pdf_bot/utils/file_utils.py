@@ -89,6 +89,19 @@ class FileProcessor:
         return file_path
 
     @staticmethod
+    def save_file_stream(user_id, response_stream, file_name):
+        """حفظ ملف من استجابة تدفق (Stream) لتقليل استهلاك الرام"""
+        user_dir = FileProcessor.get_user_directory(user_id)
+        safe_name = FileProcessor.sanitize_filename(file_name, default_name=f"file_{int(time.time())}")
+        file_path = FileProcessor.make_unique_path(user_dir, safe_name)
+        
+        with open(file_path, 'wb') as f:
+            for chunk in response_stream.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+        return file_path
+
+    @staticmethod
     def extract_text_from_file(file_path):
         '''استخراج النص من الملفات المدعومة'''
         _, ext = os.path.splitext(file_path.lower())
