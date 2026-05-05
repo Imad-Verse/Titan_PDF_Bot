@@ -54,6 +54,7 @@ class AdvancedConfig:
     SESSION_TIMEOUT = 3600
 
     THREAD_POOL_SIZE = 100
+    MAX_CONCURRENT_TASKS = 4   # أقصى عدد لعمليات المعالجة الثقيلة في نفس الوقت
     REQUEST_TIMEOUT = 90
     RATE_LIMIT_PER_USER = 10
 
