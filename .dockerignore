@@ -1,0 +1,14 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.git/
+.gitignore
+logs/
+storage/
+.titan_runtime/
+desktop.ini
+*.ico
+*.md
