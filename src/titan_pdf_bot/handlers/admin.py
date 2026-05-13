@@ -18,7 +18,7 @@ def handle_admin_settings_button(message):
     if user_id not in AdvancedConfig.ADMINS:
         bot.reply_to(message, "🚫 <b>غير مصرح لك بالوصول لهذه الصفحة</b>", 
                     parse_mode='HTML', reply_markup=UIManager.create_error_buttons())
-        return
+    return
     bot.send_message(message.chat.id, "⚙️ <b>إعدادات المدير</b>\nاختر الإجراء المطلوب:", 
                     reply_markup=UIManager.create_admin_settings_menu(), parse_mode='HTML')
 
@@ -122,15 +122,9 @@ def handle_admin_settings(message):
         )
     
     elif text == "💾 نسخ قاعدة البيانات":
-        try:
-            backup_path = db.backup_database()
-            with open(backup_path, 'rb') as f:
-                bot.send_document(message.chat.id, f, 
-                                caption=f"💾 <b>نسخة احتياطية:</b> <code>{os.path.basename(backup_path)}</code>", 
-                                parse_mode='HTML')
-        except Exception as e:
-            bot.reply_to(message, f"❌ <b>خطأ في إنشاء النسخة الاحتياطية:</b>\n<code>{str(e)}</code>", 
-                        parse_mode='HTML', reply_markup=UIManager.create_error_buttons())
+        bot.reply_to(message, "⏳ <b>جاري إنشاء النسخة الاحتياطية...</b>\nستصلك النسخة هنا فور اكتمالها.", parse_mode='HTML')
+        from titan_pdf_bot.services.backup import BackupService
+        BackupService.perform_backup_async(message.chat.id)
     
     elif text == "🔧 وضع الصيانة":
         if is_maintenance_mode():
@@ -154,7 +148,7 @@ def process_admin_ban_step(message):
             bot.reply_to(message, "❌ <b>لم يتم العثور على مستخدم بهذا المعرف.</b>", 
                         parse_mode='HTML', reply_markup=UIManager.create_error_buttons())
         elif new_status == 1:
-            bot.reply_to(message, f"🚫 <b>تم حظرك المستخدم {target_id} بنجاح.</b>", 
+            bot.reply_to(message, f"🚫 <b>تم حظر المستخدم {target_id} بنجاح.</b>", 
                         parse_mode='HTML', reply_markup=UIManager.create_admin_settings_menu())
         else:
             bot.reply_to(message, f"✅ <b>تم فك حظر المستخدم {target_id} بنجاح.</b>", 
@@ -221,4 +215,3 @@ def process_admin_broadcast_step(message):
 
     perform_broadcast(message)
     session_manager.clear_session(message.from_user.id)
-

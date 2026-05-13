@@ -20,6 +20,10 @@ class AdvancedCleanupSystem:
                     session_manager.cleanup_inactive_sessions()
                     self.cleanup_temp_files()
                     self.update_system_stats()
+                    
+                    # New: Professional Backup Cleanup
+                    from titan_pdf_bot.services.backup import BackupService
+                    BackupService.cleanup_old_backups()
                 except Exception as e:
                     logger.log('error', f"? Cleanup Error: {e}")
                 time.sleep(AdvancedConfig.CLEANUP_INTERVAL)
