@@ -50,11 +50,13 @@ def start_bot_safe():
     retry_delay = 10
     while True:
         try:
-            logger.log("info", "🚀 Bot is online and ready to serve!")
-
-            print("\n==================================================")
-            print("      💡  B O T   I S   R U N N I N G  💡")
-            print("==================================================\n")
+            logger.log("success", "Bot is online and ready to serve!")
+            
+            log_level = os.getenv("TITAN_LOG_LEVEL", "INFO").upper()
+            if log_level in ["INFO", "DEBUG"]:
+                print("\n==================================================")
+                print("      💡  B O T   I S   R U N N I N G  💡")
+                print("==================================================\n")
 
             # Reset delay on successful start
             retry_delay = 10
@@ -76,9 +78,11 @@ def main():
     except Exception:
         pass
 
-    print("\n==================================================")
-    print("   🚀  T I T A N   P D F   B O T   S Y S T E M  🚀")
-    print("==================================================\n")
+    log_level = os.getenv("TITAN_LOG_LEVEL", "INFO").upper()
+    if log_level in ["INFO", "DEBUG"]:
+        print("\n==================================================")
+        print("   🚀  T I T A N   P D F   B O T   S Y S T E M  🚀")
+        print("==================================================\n")
 
     start_bot_safe()
 
