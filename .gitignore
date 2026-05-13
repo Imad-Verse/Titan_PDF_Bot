@@ -1,5 +1,9 @@
 # Files
+__pycache__/
+*.py[cod]
+*$py.class
 *.log
+
 *.zip
 .env
 .venv/
