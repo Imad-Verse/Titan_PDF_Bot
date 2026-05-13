@@ -1,22 +1,23 @@
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# Files
 *.log
-*.db
-*.sqlite
 *.zip
 .env
 .venv/
 venv/
 env/
 logs/
-storage/
 .titan_runtime/
 desktop.ini
-Thumbs.db
-.vscode/
-.idea/
+
+# Allow databases in storage
+!storage/
+storage/*
+!storage/*.db
+!storage/*.sqlite
+!storage/*.json
+
+# Keep temporary SQLite files ignored
 *.db-journal
 *.db-shm
 *.db-wal
+
