@@ -59,7 +59,7 @@ python main.py
 ## 📂 هيكلة المشروع | Project Structure
 
 ```text
-Titan_PDF_Bot/
+titanpdf-bot/
 ├── main.py                # نقطة الانطلاق
 ├── requirements.txt       # المكتبات المطلوبة
 ├── .env                   # الإعدادات السرية (مخفي)
